@@ -1,0 +1,176 @@
+---
+title: FABMenu
+description: A Jetpack Compose FABMenu (Speed Dial) component that expands a floating action button into a list of secondary actions.
+sourceCodeUrl: 'https://github.com/expo/expo/tree/main/packages/expo-ui'
+packageName: '@expo/ui'
+platforms: ['android']
+---
+
+import APISection from '~/components/plugins/APISection';
+import { APIInstallSection } from '~/components/plugins/InstallSection';
+
+`FABMenu` implements the Material 3 [Speed Dial](https://m3.material.io/components/floating-action-button/guidelines#4d2ed8ef-6b80-4577-91bd-d2b91dffad2b) pattern. Tapping the main FAB reveals a vertical column of smaller secondary FABs that animate in/out. Each secondary action is defined with `FABMenu.Item`.
+
+## When to use FABMenu vs. HorizontalFloatingToolbar
+
+| | **FABMenu** | **HorizontalFloatingToolbar** |
+|---|---|---|
+| **Visibility** | Actions are hidden by default; revealed on demand | Actions are always visible in a horizontal bar |
+| **Best for** | A single primary action that branches into several secondary ones | A flat set of related actions that benefit from constant visibility |
+| **Typical use case** | "Create" button that expands to Photo / Document / Contact | Text-formatting controls, playback controls |
+| **Discoverability** | Lower (hidden by default) | Higher (always visible) |
+
+Use **FABMenu** when you want to keep the UI clean and only surface secondary actions when the user explicitly requests them. Use **HorizontalFloatingToolbar** when the secondary actions are equally important and should be visible at all times (or revealed/hidden through scroll behaviour).
+
+## Installation
+
+<APIInstallSection />
+
+## Usage
+
+### Basic uncontrolled
+
+The simplest usage lets the component manage its own open/closed state. Tap the main FAB to toggle the speed-dial.
+
+```tsx FABMenuBasicExample.tsx
+import { View, StyleSheet } from 'react-native';
+import { FABMenu, Host } from '@expo/ui/jetpack-compose';
+
+export default function FABMenuBasicExample() {
+  return (
+    <View style={styles.container}>
+      <Host style={StyleSheet.absoluteFillObject}>
+        <FABMenu icon={require('./assets/add.xml')}>
+          <FABMenu.Item
+            icon={require('./assets/camera.xml')}
+            label="Photo"
+            onPress={() => console.log('Photo')}
+          />
+          <FABMenu.Item
+            icon={require('./assets/edit.xml')}
+            label="Write"
+            onPress={() => console.log('Write')}
+          />
+        </FABMenu>
+      </Host>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+});
+```
+
+### Controlled open state
+
+Pass `open` and `onOpenChange` to take full control of the menu state. This is useful when you need to close the menu programmatically (for example, after an item is tapped).
+
+```tsx FABMenuControlledExample.tsx
+import { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { FABMenu, Host } from '@expo/ui/jetpack-compose';
+
+export default function FABMenuControlledExample() {
+  const [open, setOpen] = useState(false);
+
+  const handleItemPress = (action: string) => {
+    setOpen(false); // close the menu after an action
+    console.log(action);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Host style={StyleSheet.absoluteFillObject}>
+        <FABMenu
+          icon={require('./assets/add.xml')}
+          open={open}
+          onOpenChange={setOpen}>
+          <FABMenu.Item
+            icon={require('./assets/camera.xml')}
+            label="Camera"
+            onPress={() => handleItemPress('camera')}
+          />
+          <FABMenu.Item
+            icon={require('./assets/edit.xml')}
+            label="Edit"
+            onPress={() => handleItemPress('edit')}
+          />
+        </FABMenu>
+      </Host>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+});
+```
+
+### Variants
+
+The `variant` prop sets the Material 3 container colour used for all FABs (main and items).
+
+```tsx FABMenuVariantsExample.tsx
+import { View, StyleSheet } from 'react-native';
+import { FABMenu, Host } from '@expo/ui/jetpack-compose';
+import { type FABMenuVariant } from '@expo/ui/jetpack-compose';
+
+const VARIANTS: FABMenuVariant[] = ['primary', 'secondary', 'tertiary', 'surface'];
+
+export default function FABMenuVariantsExample() {
+  return (
+    <View style={styles.row}>
+      {VARIANTS.map((variant) => (
+        <View key={variant} style={styles.cell}>
+          <Host style={StyleSheet.absoluteFillObject}>
+            <FABMenu icon={require('./assets/add.xml')} variant={variant}>
+              <FABMenu.Item icon={require('./assets/edit.xml')} label="Edit" onPress={() => {}} />
+            </FABMenu>
+          </Host>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: 8 },
+  cell: { flex: 1, height: 200 },
+});
+```
+
+### Items without labels
+
+Omit the `label` prop on `FABMenu.Item` for a compact, icon-only layout.
+
+```tsx FABMenuNoLabelsExample.tsx
+import { View, StyleSheet } from 'react-native';
+import { FABMenu, Host } from '@expo/ui/jetpack-compose';
+
+export default function FABMenuNoLabelsExample() {
+  return (
+    <View style={styles.container}>
+      <Host style={StyleSheet.absoluteFillObject}>
+        <FABMenu icon={require('./assets/add.xml')} variant="secondary">
+          <FABMenu.Item icon={require('./assets/camera.xml')} onPress={() => {}} />
+          <FABMenu.Item icon={require('./assets/edit.xml')} onPress={() => {}} />
+          <FABMenu.Item icon={require('./assets/share.xml')} onPress={() => {}} />
+        </FABMenu>
+      </Host>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+});
+```
+
+## API
+
+```tsx
+import { FABMenu } from '@expo/ui/jetpack-compose';
+```
+
+<APISection packageName="expo-ui/jetpack-compose/fabmenu" apiName="FABMenu" />

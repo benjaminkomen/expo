@@ -162,6 +162,14 @@ export const UIScreens = [
       return optionalRequire(() => require('./HorizontalFloatingToolbarScreen'));
     },
   },
+  {
+    name: 'FABMenu component',
+    route: 'ui/fab-menu',
+    options: {},
+    getComponent() {
+      return optionalRequire(() => require('./FABMenuScreen'));
+    },
+  },
 ];
 
 export default function UIScreen() {

@@ -82,6 +82,10 @@ class ExpoUIModule : Module() {
     View(IconView::class)
     View(LazyColumnView::class)
 
+    View(FABMenuItemView::class) {
+      Events("onPress")
+    }
+
     //endregion Views use expo-modules-core DSL for uncommon features
 
     //region Expo UI views
@@ -286,6 +290,13 @@ class ExpoUIModule : Module() {
 
     ExpoUIView("AnimatedVisibilityView") { props: AnimatedVisibilityProps ->
       AnimatedVisibilityContent(props)
+    }
+
+    ExpoUIView("FABMenuView", events = {
+      Events("onOpenChange")
+    }) { props: FABMenuProps ->
+      val onOpenChange by remember { EventDispatcher<FABMenuOpenChangeEvent>() }
+      FABMenuContent(props) { onOpenChange(it) }
     }
 
     ExpoUIView("RadioButtonView", events = {
