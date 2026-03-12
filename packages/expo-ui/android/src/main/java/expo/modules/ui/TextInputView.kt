@@ -1,41 +1,48 @@
 package expo.modules.ui
 
-import android.annotation.SuppressLint
-import android.content.Context
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import expo.modules.kotlin.AppContext
-import expo.modules.kotlin.viewevent.EventDispatcher
+import expo.modules.kotlin.records.Field
+import expo.modules.kotlin.records.Record
 import expo.modules.kotlin.views.ComposableScope
 import expo.modules.kotlin.views.ComposeProps
-import expo.modules.kotlin.views.ExpoComposeView
+import expo.modules.kotlin.views.FunctionalComposableScope
 
 data class TextInputProps(
-  val defaultValue: MutableState<String> = mutableStateOf(""),
-  val multiline: MutableState<Boolean> = mutableStateOf(false),
-  val numberOfLines: MutableState<Int?> = mutableStateOf(null),
-  val keyboardType: MutableState<String> = mutableStateOf("default"),
-  val autocorrection: MutableState<Boolean> = mutableStateOf(true),
-  val autoCapitalize: MutableState<String> = mutableStateOf("none"),
-  val isError: MutableState<Boolean> = mutableStateOf(false),
-  val enabled: MutableState<Boolean> = mutableStateOf(true),
-  val readOnly: MutableState<Boolean> = mutableStateOf(false),
-  val secureTextEntry: MutableState<Boolean> = mutableStateOf(false),
-  val colors: MutableState<TextInputColorsRecord?> = mutableStateOf(null),
-  val modifiers: MutableState<ModifierList> = mutableStateOf(emptyList())
+  val defaultValue: String = "",
+  val multiline: Boolean = false,
+  val numberOfLines: Int? = null,
+  val keyboardType: String = "default",
+  val autocorrection: Boolean = true,
+  val autoCapitalize: String = "none",
+  val isError: Boolean = false,
+  val enabled: Boolean = true,
+  val readOnly: Boolean = false,
+  val secureTextEntry: Boolean = false,
+  val colors: TextInputColorsRecord? = null,
+  val setTextNonce: Int = 0,
+  val setText: String? = null,
+  val modifiers: ModifierList = emptyList()
 ) : ComposeProps
 
-private fun String.keyboardType(): KeyboardType {
+data class TextInputValueChangedEvent(
+  @Field val value: String
+) : Record
+
+private fun String.toKeyboardType(): KeyboardType {
   return when (this) {
     "default" -> KeyboardType.Text
     "numeric" -> KeyboardType.Number
@@ -50,7 +57,7 @@ private fun String.keyboardType(): KeyboardType {
   }
 }
 
-private fun String.autoCapitalize(): KeyboardCapitalization {
+private fun String.toAutoCapitalize(): KeyboardCapitalization {
   return when (this) {
     "characters" -> KeyboardCapitalization.Characters
     "none" -> KeyboardCapitalization.None
@@ -65,112 +72,121 @@ private fun SlotView.asComposable(): @Composable () -> Unit = {
   with(ComposableScope()) { with(this@asComposable) { Content() } }
 }
 
-@SuppressLint("ViewConstructor")
-class TextInputView(context: Context, appContext: AppContext) :
-  ExpoComposeView<TextInputProps>(context, appContext) {
-  override val props = TextInputProps()
-  private val onValueChanged by EventDispatcher()
-
-  private val textState = mutableStateOf<String?>(null)
-
-  var text: String?
-    get() = textState.value
-    set(value) {
-      textState.value = value
-      onValueChanged(mapOf("value" to (value ?: "")))
-    }
-
-  @Composable
-  override fun ComposableScope.Content() {
-    val labelSlot = findChildSlotView(this@TextInputView, "label")
-    val placeholderSlot = findChildSlotView(this@TextInputView, "placeholder")
-    val leadingIconSlot = findChildSlotView(this@TextInputView, "leadingIcon")
-    val trailingIconSlot = findChildSlotView(this@TextInputView, "trailingIcon")
-    val prefixSlot = findChildSlotView(this@TextInputView, "prefix")
-    val suffixSlot = findChildSlotView(this@TextInputView, "suffix")
-    val supportingTextSlot = findChildSlotView(this@TextInputView, "supportingText")
-
+@Composable
+fun FunctionalComposableScope.TextInputContent(
+  props: TextInputProps,
+  onValueChanged: (TextInputValueChangedEvent) -> Unit
+) {
+  TextInputSharedContent(props = props, onValueChanged = onValueChanged) { params ->
     TextField(
-      value = textState.value ?: props.defaultValue.value,
-      onValueChange = {
-        textState.value = it
-        onValueChanged(mapOf("value" to it))
-      },
-      label = labelSlot?.asComposable(),
-      placeholder = placeholderSlot?.asComposable(),
-      leadingIcon = leadingIconSlot?.asComposable(),
-      trailingIcon = trailingIconSlot?.asComposable(),
-      prefix = prefixSlot?.asComposable(),
-      suffix = suffixSlot?.asComposable(),
-      supportingText = supportingTextSlot?.asComposable(),
-      isError = props.isError.value,
-      enabled = props.enabled.value,
-      readOnly = props.readOnly.value,
-      visualTransformation = if (props.secureTextEntry.value) PasswordVisualTransformation() else VisualTransformation.None,
-      maxLines = if (props.multiline.value) props.numberOfLines.value ?: Int.MAX_VALUE else 1,
-      singleLine = !props.multiline.value,
-      keyboardOptions = KeyboardOptions.Default.copy(
-        keyboardType = props.keyboardType.value.keyboardType(),
-        autoCorrectEnabled = props.autocorrection.value,
-        capitalization = props.autoCapitalize.value.autoCapitalize()
-      ),
-      colors = props.colors.value?.toTextFieldColors() ?: TextFieldDefaults.colors(),
-      modifier = ModifierRegistry.applyModifiers(props.modifiers.value, appContext, this@Content, globalEventDispatcher)
+      value = params.value,
+      onValueChange = params.onValueChange,
+      label = params.label,
+      placeholder = params.placeholder,
+      leadingIcon = params.leadingIcon,
+      trailingIcon = params.trailingIcon,
+      prefix = params.prefix,
+      suffix = params.suffix,
+      supportingText = params.supportingText,
+      isError = props.isError,
+      enabled = props.enabled,
+      readOnly = props.readOnly,
+      visualTransformation = params.visualTransformation,
+      maxLines = params.maxLines,
+      singleLine = params.singleLine,
+      keyboardOptions = params.keyboardOptions,
+      colors = props.colors?.toTextFieldColors() ?: TextFieldDefaults.colors(),
+      modifier = params.modifier
     )
   }
 }
 
-@SuppressLint("ViewConstructor")
-class OutlinedTextInputView(context: Context, appContext: AppContext) :
-  ExpoComposeView<TextInputProps>(context, appContext) {
-  override val props = TextInputProps()
-  private val onValueChanged by EventDispatcher()
-
-  private val textState = mutableStateOf<String?>(null)
-
-  var text: String?
-    get() = textState.value
-    set(value) {
-      textState.value = value
-      onValueChanged(mapOf("value" to (value ?: "")))
-    }
-
-  @Composable
-  override fun ComposableScope.Content() {
-    val labelSlot = findChildSlotView(this@OutlinedTextInputView, "label")
-    val placeholderSlot = findChildSlotView(this@OutlinedTextInputView, "placeholder")
-    val leadingIconSlot = findChildSlotView(this@OutlinedTextInputView, "leadingIcon")
-    val trailingIconSlot = findChildSlotView(this@OutlinedTextInputView, "trailingIcon")
-    val prefixSlot = findChildSlotView(this@OutlinedTextInputView, "prefix")
-    val suffixSlot = findChildSlotView(this@OutlinedTextInputView, "suffix")
-    val supportingTextSlot = findChildSlotView(this@OutlinedTextInputView, "supportingText")
-
+@Composable
+fun FunctionalComposableScope.OutlinedTextInputContent(
+  props: TextInputProps,
+  onValueChanged: (TextInputValueChangedEvent) -> Unit
+) {
+  TextInputSharedContent(props = props, onValueChanged = onValueChanged) { params ->
     OutlinedTextField(
-      value = textState.value ?: props.defaultValue.value,
-      onValueChange = {
-        textState.value = it
-        onValueChanged(mapOf("value" to it))
-      },
-      label = labelSlot?.asComposable(),
-      placeholder = placeholderSlot?.asComposable(),
-      leadingIcon = leadingIconSlot?.asComposable(),
-      trailingIcon = trailingIconSlot?.asComposable(),
-      prefix = prefixSlot?.asComposable(),
-      suffix = suffixSlot?.asComposable(),
-      supportingText = supportingTextSlot?.asComposable(),
-      isError = props.isError.value,
-      enabled = props.enabled.value,
-      readOnly = props.readOnly.value,
-      visualTransformation = if (props.secureTextEntry.value) PasswordVisualTransformation() else VisualTransformation.None,
-      maxLines = if (props.multiline.value) props.numberOfLines.value ?: Int.MAX_VALUE else 1,
-      singleLine = !props.multiline.value,
-      keyboardOptions = KeyboardOptions.Default.copy(
-        keyboardType = props.keyboardType.value.keyboardType(),
-        autoCorrectEnabled = props.autocorrection.value,
-        capitalization = props.autoCapitalize.value.autoCapitalize()
-      ),
-      colors = props.colors.value?.toOutlinedTextFieldColors() ?: OutlinedTextFieldDefaults.colors(),
-      modifier = ModifierRegistry.applyModifiers(props.modifiers.value, appContext, this@Content, globalEventDispatcher)
+      value = params.value,
+      onValueChange = params.onValueChange,
+      label = params.label,
+      placeholder = params.placeholder,
+      leadingIcon = params.leadingIcon,
+      trailingIcon = params.trailingIcon,
+      prefix = params.prefix,
+      suffix = params.suffix,
+      supportingText = params.supportingText,
+      isError = props.isError,
+      enabled = props.enabled,
+      readOnly = props.readOnly,
+      visualTransformation = params.visualTransformation,
+      maxLines = params.maxLines,
+      singleLine = params.singleLine,
+      keyboardOptions = params.keyboardOptions,
+      colors = props.colors?.toOutlinedTextFieldColors() ?: OutlinedTextFieldDefaults.colors(),
+      modifier = params.modifier
     )
   }
+}
+
+/**
+ * Shared parameters passed from [TextInputSharedContent] to the text field composable.
+ */
+private class TextFieldParams(
+  val value: String,
+  val onValueChange: (String) -> Unit,
+  val label: @Composable (() -> Unit)?,
+  val placeholder: @Composable (() -> Unit)?,
+  val leadingIcon: @Composable (() -> Unit)?,
+  val trailingIcon: @Composable (() -> Unit)?,
+  val prefix: @Composable (() -> Unit)?,
+  val suffix: @Composable (() -> Unit)?,
+  val supportingText: @Composable (() -> Unit)?,
+  val keyboardOptions: KeyboardOptions,
+  val visualTransformation: VisualTransformation,
+  val singleLine: Boolean,
+  val maxLines: Int,
+  val modifier: androidx.compose.ui.Modifier
+)
+
+@Composable
+private fun FunctionalComposableScope.TextInputSharedContent(
+  props: TextInputProps,
+  onValueChanged: (TextInputValueChangedEvent) -> Unit,
+  textField: @Composable (TextFieldParams) -> Unit
+) {
+  var textState by remember { mutableStateOf(props.defaultValue) }
+  var prevSetTextNonce by remember { mutableIntStateOf(props.setTextNonce) }
+
+  if (props.setTextNonce != prevSetTextNonce) {
+    prevSetTextNonce = props.setTextNonce
+    props.setText?.let { textState = it }
+  }
+
+  textField(
+    TextFieldParams(
+      value = textState,
+      onValueChange = { newValue ->
+        textState = newValue
+        onValueChanged(TextInputValueChangedEvent(newValue))
+      },
+      label = findChildSlotView(view, "label")?.asComposable(),
+      placeholder = findChildSlotView(view, "placeholder")?.asComposable(),
+      leadingIcon = findChildSlotView(view, "leadingIcon")?.asComposable(),
+      trailingIcon = findChildSlotView(view, "trailingIcon")?.asComposable(),
+      prefix = findChildSlotView(view, "prefix")?.asComposable(),
+      suffix = findChildSlotView(view, "suffix")?.asComposable(),
+      supportingText = findChildSlotView(view, "supportingText")?.asComposable(),
+      keyboardOptions = KeyboardOptions.Default.copy(
+        keyboardType = props.keyboardType.toKeyboardType(),
+        autoCorrectEnabled = props.autocorrection,
+        capitalization = props.autoCapitalize.toAutoCapitalize()
+      ),
+      visualTransformation = if (props.secureTextEntry) PasswordVisualTransformation() else VisualTransformation.None,
+      singleLine = !props.multiline,
+      maxLines = if (props.multiline) props.numberOfLines ?: Int.MAX_VALUE else 1,
+      modifier = ModifierRegistry.applyModifiers(props.modifiers, appContext, composableScope, globalEventDispatcher)
+    )
+  )
 }

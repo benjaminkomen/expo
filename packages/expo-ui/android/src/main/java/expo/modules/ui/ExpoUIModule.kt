@@ -62,28 +62,18 @@ class ExpoUIModule : Module() {
 
     View(RNHostView::class)
 
-    View(TextInputView::class) {
+    ExpoUIView("TextInputView", events = {
       Events("onValueChanged")
-      Prop("defaultValue", "") { view: TextInputView, text: String ->
-        if (view.text == null) {
-          view.text = text
-        }
-      }
-      AsyncFunction("setText") { view: TextInputView, text: String ->
-        view.text = text
-      }
+    }) { props: TextInputProps ->
+      val onValueChanged by remember { EventDispatcher<TextInputValueChangedEvent>() }
+      TextInputContent(props) { onValueChanged(it) }
     }
 
-    View(OutlinedTextInputView::class) {
+    ExpoUIView("OutlinedTextInputView", events = {
       Events("onValueChanged")
-      Prop("defaultValue", "") { view: OutlinedTextInputView, text: String ->
-        if (view.text == null) {
-          view.text = text
-        }
-      }
-      AsyncFunction("setText") { view: OutlinedTextInputView, text: String ->
-        view.text = text
-      }
+    }) { props: TextInputProps ->
+      val onValueChanged by remember { EventDispatcher<TextInputValueChangedEvent>() }
+      OutlinedTextInputContent(props) { onValueChanged(it) }
     }
 
     View(SlotView::class) {

@@ -212,12 +212,12 @@ export default function TextInputScreen() {
       <Section title="Outlined — label and placeholder">
         <Host matchContents>
           <TextInput.Outlined onChangeText={setValue}>
-            <TextInput.Outlined.Label>
+            <TextInput.Label>
               <ExpoText>Full name</ExpoText>
-            </TextInput.Outlined.Label>
-            <TextInput.Outlined.Placeholder>
+            </TextInput.Label>
+            <TextInput.Placeholder>
               <ExpoText>e.g. Jane Doe</ExpoText>
-            </TextInput.Outlined.Placeholder>
+            </TextInput.Placeholder>
           </TextInput.Outlined>
         </Host>
       </Section>
@@ -225,15 +225,15 @@ export default function TextInputScreen() {
       <Section title="Outlined — prefix and suffix">
         <Host matchContents>
           <TextInput.Outlined keyboardType="decimal-pad" onChangeText={setValue}>
-            <TextInput.Outlined.Label>
+            <TextInput.Label>
               <ExpoText>Amount</ExpoText>
-            </TextInput.Outlined.Label>
-            <TextInput.Outlined.Prefix>
+            </TextInput.Label>
+            <TextInput.Prefix>
               <ExpoText>$</ExpoText>
-            </TextInput.Outlined.Prefix>
-            <TextInput.Outlined.Suffix>
+            </TextInput.Prefix>
+            <TextInput.Suffix>
               <ExpoText>USD</ExpoText>
-            </TextInput.Outlined.Suffix>
+            </TextInput.Suffix>
           </TextInput.Outlined>
         </Host>
       </Section>
@@ -247,19 +247,19 @@ export default function TextInputScreen() {
               setValue(text);
               setIsEmailValid(text.length === 0 || text.includes('@'));
             }}>
-            <TextInput.Outlined.Label>
+            <TextInput.Label>
               <ExpoText>Email</ExpoText>
-            </TextInput.Outlined.Label>
-            <TextInput.Outlined.LeadingIcon>
+            </TextInput.Label>
+            <TextInput.LeadingIcon>
               <Icon source={searchIcon} size={24} contentDescription="Email" />
-            </TextInput.Outlined.LeadingIcon>
-            <TextInput.Outlined.SupportingText>
+            </TextInput.LeadingIcon>
+            <TextInput.SupportingText>
               <ExpoText>
                 {isEmailValid
                   ? 'We will send a confirmation here.'
                   : 'Enter a valid email address.'}
               </ExpoText>
-            </TextInput.Outlined.SupportingText>
+            </TextInput.SupportingText>
           </TextInput.Outlined>
         </Host>
       </Section>

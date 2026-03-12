@@ -1,12 +1,12 @@
 import { requireNativeView } from 'expo';
-import { Ref } from 'react';
+import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 import { type ColorValue } from 'react-native';
 
 import { ExpoModifier, ViewEvent } from '../../types';
 import { createViewModifierEventListener } from '../modifiers/utils';
 
 export type TextInputRef = {
-  setText: (newText: string) => Promise<void>;
+  setText: (newText: string) => void;
 };
 
 /**
@@ -153,8 +153,11 @@ export type TextInputProps = {
   children?: React.ReactNode;
 };
 
-export type NativeTextInputProps = Omit<TextInputProps, 'onChangeText'> &
-  ViewEvent<'onValueChanged', { value: string }>;
+type NativeTextInputProps = Omit<TextInputProps, 'onChangeText' | 'ref'> &
+  ViewEvent<'onValueChanged', { value: string }> & {
+    setText?: string;
+    setTextNonce?: number;
+  };
 
 type NativeSlotViewProps = {
   slotName: string;
@@ -180,27 +183,31 @@ const SlotNativeView: React.ComponentType<NativeSlotViewProps> = requireNativeVi
   'SlotView'
 );
 
-function transformTextInputProps(props: TextInputProps): NativeTextInputProps {
-  const { modifiers, ...restProps } = props;
+function transformTextInputProps(
+  props: Omit<TextInputProps, 'ref'>,
+  setText?: string,
+  setTextNonce?: number
+): NativeTextInputProps {
+  const { modifiers, onChangeText, ...restProps } = props;
   return {
     modifiers,
     ...(modifiers ? createViewModifierEventListener(modifiers) : undefined),
     ...restProps,
+    setText,
+    setTextNonce,
     onValueChanged: (event) => {
-      props.onChangeText?.(event.nativeEvent.value);
+      onChangeText?.(event.nativeEvent.value);
     },
   };
 }
 
 // ---- Shared slot sub-components ----
-// Both TextInput and TextInput.Outlined read from the same slotName strings,
-// so they can share the same slot component implementations.
 
 /**
  * Floating label slot for `TextInput` / `TextInput.Outlined`.
  * The label animates above the field when the field is focused or has content.
  */
-export function TextInputLabel(props: TextInputSlotProps) {
+function TextInputLabel(props: TextInputSlotProps) {
   return <SlotNativeView slotName="label">{props.children}</SlotNativeView>;
 }
 
@@ -208,7 +215,7 @@ export function TextInputLabel(props: TextInputSlotProps) {
  * Placeholder slot for `TextInput` / `TextInput.Outlined`.
  * Displayed when the field is empty.
  */
-export function TextInputPlaceholder(props: TextInputSlotProps) {
+function TextInputPlaceholder(props: TextInputSlotProps) {
   return <SlotNativeView slotName="placeholder">{props.children}</SlotNativeView>;
 }
 
@@ -216,7 +223,7 @@ export function TextInputPlaceholder(props: TextInputSlotProps) {
  * Leading icon slot for `TextInput` / `TextInput.Outlined`.
  * Rendered to the left of the input area.
  */
-export function TextInputLeadingIcon(props: TextInputSlotProps) {
+function TextInputLeadingIcon(props: TextInputSlotProps) {
   return <SlotNativeView slotName="leadingIcon">{props.children}</SlotNativeView>;
 }
 
@@ -224,7 +231,7 @@ export function TextInputLeadingIcon(props: TextInputSlotProps) {
  * Trailing icon slot for `TextInput` / `TextInput.Outlined`.
  * Rendered to the right of the input area.
  */
-export function TextInputTrailingIcon(props: TextInputSlotProps) {
+function TextInputTrailingIcon(props: TextInputSlotProps) {
   return <SlotNativeView slotName="trailingIcon">{props.children}</SlotNativeView>;
 }
 
@@ -232,7 +239,7 @@ export function TextInputTrailingIcon(props: TextInputSlotProps) {
  * Prefix slot for `TextInput` / `TextInput.Outlined`.
  * Rendered inside the text area, before the typed text.
  */
-export function TextInputPrefix(props: TextInputSlotProps) {
+function TextInputPrefix(props: TextInputSlotProps) {
   return <SlotNativeView slotName="prefix">{props.children}</SlotNativeView>;
 }
 
@@ -240,7 +247,7 @@ export function TextInputPrefix(props: TextInputSlotProps) {
  * Suffix slot for `TextInput` / `TextInput.Outlined`.
  * Rendered inside the text area, after the typed text.
  */
-export function TextInputSuffix(props: TextInputSlotProps) {
+function TextInputSuffix(props: TextInputSlotProps) {
   return <SlotNativeView slotName="suffix">{props.children}</SlotNativeView>;
 }
 
@@ -248,7 +255,7 @@ export function TextInputSuffix(props: TextInputSlotProps) {
  * Supporting text slot for `TextInput` / `TextInput.Outlined`.
  * Rendered below the field. When `isError` is true, this text is rendered in the error color.
  */
-export function TextInputSupportingText(props: TextInputSlotProps) {
+function TextInputSupportingText(props: TextInputSlotProps) {
   return <SlotNativeView slotName="supportingText">{props.children}</SlotNativeView>;
 }
 
@@ -272,8 +279,26 @@ export function TextInputSupportingText(props: TextInputSlotProps) {
  *
  * @platform android
  */
-function TextInputComponent(props: TextInputProps) {
-  return <TextInputNativeView {...transformTextInputProps(props)} />;
+function TextInputComponent({ ref, ...props }: TextInputProps) {
+  const [setText, setSetText] = useState<string | undefined>(undefined);
+  const nonceRef = useRef(0);
+  const [setTextNonce, setSetTextNonce] = useState(0);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      setText: (newText: string) => {
+        nonceRef.current += 1;
+        setSetText(newText);
+        setSetTextNonce(nonceRef.current);
+      },
+    }),
+    []
+  );
+
+  return (
+    <TextInputNativeView {...transformTextInputProps(props, setText, setTextNonce)} />
+  );
 }
 
 TextInputComponent.Label = TextInputLabel;
@@ -300,17 +325,27 @@ TextInputComponent.SupportingText = TextInputSupportingText;
  *
  * @platform android
  */
-function OutlinedTextInputComponent(props: TextInputProps) {
-  return <OutlinedTextInputNativeView {...transformTextInputProps(props)} />;
-}
+function OutlinedTextInputComponent({ ref, ...props }: TextInputProps) {
+  const [setText, setSetText] = useState<string | undefined>(undefined);
+  const nonceRef = useRef(0);
+  const [setTextNonce, setSetTextNonce] = useState(0);
 
-OutlinedTextInputComponent.Label = TextInputLabel;
-OutlinedTextInputComponent.Placeholder = TextInputPlaceholder;
-OutlinedTextInputComponent.LeadingIcon = TextInputLeadingIcon;
-OutlinedTextInputComponent.TrailingIcon = TextInputTrailingIcon;
-OutlinedTextInputComponent.Prefix = TextInputPrefix;
-OutlinedTextInputComponent.Suffix = TextInputSuffix;
-OutlinedTextInputComponent.SupportingText = TextInputSupportingText;
+  useImperativeHandle(
+    ref,
+    () => ({
+      setText: (newText: string) => {
+        nonceRef.current += 1;
+        setSetText(newText);
+        setSetTextNonce(nonceRef.current);
+      },
+    }),
+    []
+  );
+
+  return (
+    <OutlinedTextInputNativeView {...transformTextInputProps(props, setText, setTextNonce)} />
+  );
+}
 
 TextInputComponent.Outlined = OutlinedTextInputComponent;
 
