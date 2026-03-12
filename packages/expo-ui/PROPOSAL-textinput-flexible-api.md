@@ -17,7 +17,13 @@ As a result, common use-cases that are trivially supported in Compose today are 
 - Floating label (the animated label that moves above the field on focus)
 - Outlined style instead of the default filled style
 
-This proposal mirrors exactly what PR #43859 did for `Button` / `IconButton`: replace opinionated string props with composable slot children, split variants into separate top-level components, and align prop names with the official Material 3 API.
+### Why TextInput needs named slots (unlike Button)
+
+PR #43859 made `Button` less opinionated by accepting **free children**: `<Button><Row><Icon /><Text /></Row></Button>`. This works because a button's composable content _is_ its children — there is only one slot and the developer owns its full layout.
+
+`TextField` is fundamentally different. Its layout is fixed by Material 3: leading icon sits to the left of the input area, trailing icon to the right, prefix/suffix appear _inside_ the text area, and supporting text is rendered below the field boundary. None of these positions can be reached by passing free children — each one is a **separate, named, positional slot** in the Compose API.
+
+The correct analogy is `ListItem`, not `Button`. `ListItem` already uses the `SlotView` named-slot pattern (`ListItem.Leading`, `ListItem.Trailing`, `ListItem.SupportingContent`) for exactly this reason. This proposal applies the same pattern to `TextInput`.
 
 ---
 
