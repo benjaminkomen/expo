@@ -1,13 +1,28 @@
-import { TextInput, TextInputRef, Button, Host, Text as ExpoText } from '@expo/ui/jetpack-compose';
+import {
+  TextInput,
+  TextInputRef,
+  Button,
+  Host,
+  Icon,
+  IconButton,
+  Text as ExpoText,
+} from '@expo/ui/jetpack-compose';
 import * as React from 'react';
 import { Text } from 'react-native';
 
 import { ScrollPage, Section } from '../../components/Page';
 
+const searchIcon = require('../../../assets/icons/search.xml');
+const closeIcon = require('../../../assets/icons/close.xml');
+const visibilityIcon = require('../../../assets/icons/visibility.xml');
+const visibilityOffIcon = require('../../../assets/icons/visibility_off.xml');
+
 export default function TextInputScreen() {
   const [value, setValue] = React.useState<string>('');
   const textRef = React.useRef<TextInputRef>(null);
   const [isEmailValid, setIsEmailValid] = React.useState(true);
+  const [secure, setSecure] = React.useState(true);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   return (
     <ScrollPage>
@@ -20,7 +35,7 @@ export default function TextInputScreen() {
           onPress={async () => {
             textRef.current?.setText('Hello there!');
           }}>
-          Set text
+          Set text imperatively
         </Button>
       </Host>
 
@@ -28,6 +43,8 @@ export default function TextInputScreen() {
 
       <Section title="Label and placeholder">
         <Host matchContents>
+          {/* Per M3 spec: use a label to identify the field; use placeholder only for
+              additional hints alongside a label, not as a substitute for it. */}
           <TextInput ref={textRef} onChangeText={setValue}>
             <TextInput.Label>
               <ExpoText>Username</ExpoText>
@@ -41,15 +58,45 @@ export default function TextInputScreen() {
 
       <Section title="Leading and trailing icons">
         <Host matchContents>
-          <TextInput onChangeText={setValue}>
+          {/* Leading icon: decorative, communicates field purpose.
+              Trailing icon: interactive action — use IconButton per M3 spec. */}
+          <TextInput
+            onChangeText={(text) => {
+              setValue(text);
+              setSearchQuery(text);
+            }}>
             <TextInput.Label>
               <ExpoText>Search</ExpoText>
             </TextInput.Label>
             <TextInput.LeadingIcon>
-              <ExpoText>🔍</ExpoText>
+              <Icon source={searchIcon} size={24} contentDescription="Search" />
             </TextInput.LeadingIcon>
+            {searchQuery.length > 0 && (
+              <TextInput.TrailingIcon>
+                <IconButton onPress={() => setSearchQuery('')}>
+                  <Icon source={closeIcon} size={24} contentDescription="Clear" />
+                </IconButton>
+              </TextInput.TrailingIcon>
+            )}
+          </TextInput>
+        </Host>
+      </Section>
+
+      <Section title="Password field with show/hide toggle">
+        <Host matchContents>
+          {/* Trailing icon as an action: toggle password visibility. */}
+          <TextInput keyboardType={secure ? 'password' : 'default'} onChangeText={setValue}>
+            <TextInput.Label>
+              <ExpoText>Password</ExpoText>
+            </TextInput.Label>
             <TextInput.TrailingIcon>
-              <ExpoText>✕</ExpoText>
+              <IconButton onPress={() => setSecure((v) => !v)}>
+                <Icon
+                  source={secure ? visibilityOffIcon : visibilityIcon}
+                  size={24}
+                  contentDescription={secure ? 'Show password' : 'Hide password'}
+                />
+              </IconButton>
             </TextInput.TrailingIcon>
           </TextInput>
         </Host>
@@ -57,6 +104,7 @@ export default function TextInputScreen() {
 
       <Section title="Prefix and suffix">
         <Host matchContents>
+          {/* Prefix/suffix are rendered inside the text area, flanking the typed text. */}
           <TextInput keyboardType="decimal-pad" onChangeText={setValue}>
             <TextInput.Label>
               <ExpoText>Amount</ExpoText>
@@ -73,6 +121,8 @@ export default function TextInputScreen() {
 
       <Section title="Error state with supporting text">
         <Host matchContents>
+          {/* isError tints the indicator, label, and supporting text in the error color.
+              The supporting text message should change to describe the error. */}
           <TextInput
             keyboardType="email-address"
             isError={!isEmailValid}
@@ -94,12 +144,12 @@ export default function TextInputScreen() {
 
       <Section title="Disabled and read-only">
         <Host matchContents>
-          <TextInput enabled={false} defaultValue="Disabled field" onChangeText={setValue}>
+          <TextInput enabled={false} defaultValue="Not interactive" onChangeText={setValue}>
             <TextInput.Label>
               <ExpoText>Disabled</ExpoText>
             </TextInput.Label>
           </TextInput>
-          <TextInput readOnly defaultValue="Read-only field" onChangeText={setValue}>
+          <TextInput readOnly defaultValue="Selectable but not editable" onChangeText={setValue}>
             <TextInput.Label>
               <ExpoText>Read-only</ExpoText>
             </TextInput.Label>
@@ -135,31 +185,22 @@ export default function TextInputScreen() {
         </Host>
       </Section>
 
-      <Section title="Phone number">
-        <Host matchContents>
-          <TextInput keyboardType="phone-pad" defaultValue="324342324" onChangeText={setValue}>
-            <TextInput.Label>
-              <ExpoText>Phone</ExpoText>
-            </TextInput.Label>
-          </TextInput>
-        </Host>
-      </Section>
-
       <Section title="Capitalization">
         <Host matchContents>
           <TextInput autocorrection={false} autoCapitalize="characters" onChangeText={setValue}>
+            <TextInput.Label>
+              <ExpoText>Characters</ExpoText>
+            </TextInput.Label>
             <TextInput.Placeholder>
               <ExpoText>ALL CAPS</ExpoText>
             </TextInput.Placeholder>
           </TextInput>
           <TextInput autocorrection={false} autoCapitalize="words" onChangeText={setValue}>
+            <TextInput.Label>
+              <ExpoText>Words</ExpoText>
+            </TextInput.Label>
             <TextInput.Placeholder>
-              <ExpoText>Capitalize Words</ExpoText>
-            </TextInput.Placeholder>
-          </TextInput>
-          <TextInput autocorrection={false} autoCapitalize="sentences" onChangeText={setValue}>
-            <TextInput.Placeholder>
-              <ExpoText>Capitalize sentences.</ExpoText>
+              <ExpoText>Capitalize Every Word</ExpoText>
             </TextInput.Placeholder>
           </TextInput>
         </Host>
@@ -196,7 +237,7 @@ export default function TextInputScreen() {
         </Host>
       </Section>
 
-      <Section title="Outlined — error state">
+      <Section title="Outlined — leading icon + error state">
         <Host matchContents>
           <TextInput.Outlined
             keyboardType="email-address"
@@ -208,9 +249,14 @@ export default function TextInputScreen() {
             <TextInput.Outlined.Label>
               <ExpoText>Email</ExpoText>
             </TextInput.Outlined.Label>
+            <TextInput.Outlined.LeadingIcon>
+              <Icon source={searchIcon} size={24} contentDescription="Email" />
+            </TextInput.Outlined.LeadingIcon>
             <TextInput.Outlined.SupportingText>
               <ExpoText>
-                {isEmailValid ? 'We will send a confirmation here.' : 'Enter a valid email address.'}
+                {isEmailValid
+                  ? 'We will send a confirmation here.'
+                  : 'Enter a valid email address.'}
               </ExpoText>
             </TextInput.Outlined.SupportingText>
           </TextInput.Outlined>
