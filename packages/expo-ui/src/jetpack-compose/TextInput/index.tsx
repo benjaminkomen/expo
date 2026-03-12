@@ -257,14 +257,18 @@ export function TextInputSupportingText(props: TextInputSlotProps) {
 /**
  * Renders a filled `TextInput` component following Material 3 design.
  *
+ * Filled text fields have more visual emphasis than outlined ones. Prefer them
+ * in dialogs and short forms where that emphasis is appropriate.
+ * For long forms with many fields, use `TextInput.Outlined` to reduce visual noise.
+ *
  * Use sub-components to fill the named slots:
  * - `TextInput.Label` — floating label
- * - `TextInput.Placeholder` — hint text shown when empty
- * - `TextInput.LeadingIcon` — icon/content at the start of the field
- * - `TextInput.TrailingIcon` — icon/content at the end of the field
+ * - `TextInput.Placeholder` — hint text shown when empty (use alongside a label, not instead of one)
+ * - `TextInput.LeadingIcon` — decorative icon identifying the field type
+ * - `TextInput.TrailingIcon` — icon or action at the end of the field; wrap interactive content in `IconButton`
  * - `TextInput.Prefix` — static content inside the field, before the typed text
  * - `TextInput.Suffix` — static content inside the field, after the typed text
- * - `TextInput.SupportingText` — helper/error text below the field
+ * - `TextInput.SupportingText` — helper text or error message below the field
  *
  * @platform android
  */
@@ -284,7 +288,10 @@ TextInputComponent.SupportingText = TextInputSupportingText;
 
 /**
  * Renders an outlined `TextInput` component following Material 3 design.
- * Identical API to `TextInput` but with an outlined border instead of a filled background.
+ *
+ * Outlined text fields have less visual emphasis than filled ones. Prefer them
+ * in long forms where the reduced emphasis simplifies a dense layout.
+ * For dialogs and short forms, use `TextInput` (filled) instead.
  *
  * Accepts the same slot sub-components as `TextInput`:
  * `TextInput.Label`, `TextInput.Placeholder`, `TextInput.LeadingIcon`,
