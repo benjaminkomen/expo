@@ -84,8 +84,9 @@ export default function TextInputScreen() {
 
       <Section title="Password field with show/hide toggle">
         <Host matchContents>
-          {/* Trailing icon as an action: toggle password visibility. */}
-          <TextInput keyboardType={secure ? 'password' : 'default'} onChangeText={setValue}>
+          {/* secureTextEntry applies PasswordVisualTransformation (bullet masking).
+              Toggle it via the trailing IconButton to show/hide the password. */}
+          <TextInput secureTextEntry={secure} onChangeText={setValue}>
             <TextInput.Label>
               <ExpoText>Password</ExpoText>
             </TextInput.Label>

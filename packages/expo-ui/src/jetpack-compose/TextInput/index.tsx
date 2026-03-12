@@ -102,6 +102,14 @@ export type TextInputProps = {
     | 'url'
     | 'decimal-pad';
   /**
+   * If true, the text is visually masked with bullet characters (•••).
+   * Use this for password fields. Toggle it to implement show/hide password.
+   * Note: this is separate from `keyboardType` — set `keyboardType="numeric"` together
+   * with `secureTextEntry` for a masked numeric PIN field.
+   * @default false
+   */
+  secureTextEntry?: boolean;
+  /**
    * If true, autocorrection is enabled.
    * @default true
    */

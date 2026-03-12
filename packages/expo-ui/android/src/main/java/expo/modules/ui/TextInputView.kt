@@ -12,6 +12,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ComposableScope
@@ -28,6 +30,7 @@ data class TextInputProps(
   val isError: MutableState<Boolean> = mutableStateOf(false),
   val enabled: MutableState<Boolean> = mutableStateOf(true),
   val readOnly: MutableState<Boolean> = mutableStateOf(false),
+  val secureTextEntry: MutableState<Boolean> = mutableStateOf(false),
   val colors: MutableState<TextInputColorsRecord?> = mutableStateOf(null),
   val modifiers: MutableState<ModifierList> = mutableStateOf(emptyList())
 ) : ComposeProps
@@ -103,6 +106,7 @@ class TextInputView(context: Context, appContext: AppContext) :
       isError = props.isError.value,
       enabled = props.enabled.value,
       readOnly = props.readOnly.value,
+      visualTransformation = if (props.secureTextEntry.value) PasswordVisualTransformation() else VisualTransformation.None,
       maxLines = if (props.multiline.value) props.numberOfLines.value ?: Int.MAX_VALUE else 1,
       singleLine = !props.multiline.value,
       keyboardOptions = KeyboardOptions.Default.copy(
@@ -157,6 +161,7 @@ class OutlinedTextInputView(context: Context, appContext: AppContext) :
       isError = props.isError.value,
       enabled = props.enabled.value,
       readOnly = props.readOnly.value,
+      visualTransformation = if (props.secureTextEntry.value) PasswordVisualTransformation() else VisualTransformation.None,
       maxLines = if (props.multiline.value) props.numberOfLines.value ?: Int.MAX_VALUE else 1,
       singleLine = !props.multiline.value,
       keyboardOptions = KeyboardOptions.Default.copy(
