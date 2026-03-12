@@ -74,6 +74,18 @@ class ExpoUIModule : Module() {
       }
     }
 
+    View(OutlinedTextInputView::class) {
+      Events("onValueChanged")
+      Prop("defaultValue", "") { view: OutlinedTextInputView, text: String ->
+        if (view.text == null) {
+          view.text = text
+        }
+      }
+      AsyncFunction("setText") { view: OutlinedTextInputView, text: String ->
+        view.text = text
+      }
+    }
+
     View(SlotView::class) {
       Events("onSlotEvent")
     }
