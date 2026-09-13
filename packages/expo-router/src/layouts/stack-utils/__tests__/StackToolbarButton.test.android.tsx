@@ -255,5 +255,11 @@ describe('NativeToolbarButton', () => {
         contentDescription: undefined,
       });
     });
+    it('sets accessible=false on Icon to prevent it from being a competing a11y touch target (dead first tap fix)', () => {
+      render(<NativeToolbarButton {...defaultProps} />);
+      expect(MockedIcon.mock.calls[0]![0]).toMatchObject({
+        accessible: false,
+      });
+    });
   });
 });

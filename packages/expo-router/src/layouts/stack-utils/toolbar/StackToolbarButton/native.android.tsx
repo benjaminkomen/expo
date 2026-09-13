@@ -38,6 +38,7 @@ export const NativeToolbarButton: React.FC<NativeToolbarButtonProps> = (props) =
           tint={tintColor}
           size={24}
           contentDescription={props.accessibilityLabel}
+          accessible={false}
         />
       </IconButton>
     </AnimatedItemContainer>
